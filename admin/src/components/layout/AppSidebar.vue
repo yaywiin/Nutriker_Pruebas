@@ -80,14 +80,16 @@
 import { useRoute } from 'vue-router'
 import { UserCircleIcon, CalenderIcon, ListIcon, HorizontalDots } from '../../icons'
 import BoxCubeIcon from '@/icons/BoxCubeIcon.vue'
+import GridIcon from '@/icons/GridIcon.vue'
 import { useSidebar } from '@/composables/useSidebar'
 
 const route = useRoute()
 const { isExpanded, isMobileOpen, isHovered } = useSidebar()
 
 const menuItems = [
-  { name: 'Usuarios',  path: '/usuarios',  icon: UserCircleIcon },
+  { name: 'Usuarios',  path: '/usuarios',   icon: UserCircleIcon },
   { name: 'Productos', path: '/productos',  icon: BoxCubeIcon },
+  { name: 'Categorías',path: '/categorias', icon: GridIcon },
   { name: 'Pedidos',   path: '/pedidos',    icon: ListIcon },
   { name: 'Citas',     path: '/citas',      icon: CalenderIcon },
 ]
