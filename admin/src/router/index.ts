@@ -9,7 +9,7 @@ const router = createRouter({
     {
       path: '/login',
       name: 'Login',
-      component: () => import('../views/Auth/SignIn.vue'),
+      component: () => import('../views/Auth/Signin.vue'),
       meta: { title: 'Iniciar Sesión' },
     },
     {
