@@ -18,12 +18,14 @@ const PORT = process.env.PORT || 3000
 
 // ── Middleware ─────────────────────────────────────────
 app.use(cors({
-  origin: [
-    'http://localhost:5173',
-    'http://localhost:5174',
-    'http://localhost:4173',
-    'https://bioclinik-final.vercel.app'
-  ],
+  origin: function (origin, callback) {
+    // Aceptamos peticiones locales, postman y todas las URLs de Vercel
+    if (!origin || origin.includes('localhost') || origin.includes('vercel.app')) {
+      callback(null, true)
+    } else {
+      callback(new Error('No permitido por CORS'))
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }))
