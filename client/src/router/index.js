@@ -8,6 +8,7 @@ const routes = [
   { path: '/tienda/:id', name: 'ProductoDetalle', component: () => import('../views/ProductoView.vue') },
   { path: '/citas', name: 'Citas', component: () => import('../views/CitasView.vue') },
   { path: '/contacto', name: 'Contacto', component: () => import('../views/ContactoView.vue') },
+  { path: '/checkout', name: 'Checkout', component: () => import('../views/CheckoutView.vue') },
 ]
 
 const router = createRouter({

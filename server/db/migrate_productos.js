@@ -7,6 +7,8 @@ const SQL = `
     precio            NUMERIC(10,2)   NOT NULL DEFAULT 0,
     descuento         NUMERIC(5,2)    NOT NULL DEFAULT 0,
     stock             INTEGER         NOT NULL DEFAULT 0,
+    descripcion       TEXT            NOT NULL DEFAULT '',
+    descripcion_detallada TEXT        NOT NULL DEFAULT '',
     imagen_principal  TEXT            DEFAULT NULL,
     galeria           JSONB           NOT NULL DEFAULT '[]',
     created_at        TIMESTAMPTZ     NOT NULL DEFAULT NOW(),

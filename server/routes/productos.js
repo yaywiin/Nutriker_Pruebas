@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { upload } from '../middleware/upload.js'
+import { verificarToken } from '../middleware/authMiddleware.js'
 import {
   getProductos,
   getProductoById,
@@ -18,8 +19,10 @@ const productUpload = upload.fields([
 
 router.get('/',       getProductos)
 router.get('/:id',    getProductoById)
-router.post('/',      productUpload, createProducto)
-router.put('/:id',    productUpload, updateProducto)
-router.delete('/:id', deleteProducto)
+
+// Rutas protegidas
+router.post('/',      verificarToken, productUpload, createProducto)
+router.put('/:id',    verificarToken, productUpload, updateProducto)
+router.delete('/:id', verificarToken, deleteProducto)
 
 export default router

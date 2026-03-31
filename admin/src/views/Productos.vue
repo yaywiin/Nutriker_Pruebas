@@ -18,6 +18,27 @@
       {{ errorGlobal }}
     </div>
 
+    <!-- Filtros -->
+    <div class="mb-6 flex flex-col sm:flex-row gap-4">
+      <div class="flex-1">
+        <label class="sr-only">Buscar producto</label>
+        <div class="relative">
+          <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+          </div>
+          <input v-model="searchQuery" type="text"
+            class="block w-full rounded-lg border border-gray-300 bg-white p-2.5 pl-10 text-sm text-gray-900 focus:border-brand-500 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
+            placeholder="Buscar por nombre o ID del producto..." />
+        </div>
+      </div>
+      <div>
+        <label class="sr-only">Filtrar por Fecha</label>
+        <input v-model="filterDate" type="date"
+          class="block w-full rounded-lg border border-gray-300 bg-white p-2.5 text-sm text-gray-900 focus:border-brand-500 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white [color-scheme:light] dark:[color-scheme:dark]"
+          title="Puedes escribir la fecha o usar el calendario" />
+      </div>
+    </div>
+
     <!-- Tabla -->
     <div class="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
       <div v-if="loading" class="flex items-center justify-center py-16">
@@ -39,7 +60,7 @@
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-            <tr v-for="p in productos" :key="p.id" class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+            <tr v-for="p in filteredProductos" :key="p.id" class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
               <td class="px-4 py-3 text-gray-500 text-sm dark:text-gray-400">#{{ p.id }}</td>
               <td class="px-4 py-3">
                 <div class="flex items-center gap-3">
@@ -64,7 +85,15 @@
                 </span>
                 <span v-else class="text-gray-400 text-sm">—</span>
               </td>
-              <td class="px-4 py-3 text-gray-700 text-sm font-medium dark:text-white/80">${{ Number(p.precio).toFixed(2) }}</td>
+              <td class="px-4 py-3 text-sm font-medium">
+                <template v-if="p.descuento > 0">
+                  <span class="text-gray-400 line-through mr-1 dark:text-gray-500">${{ Number(p.precio).toFixed(2) }}</span>
+                  <span class="text-success-600 dark:text-success-400 font-bold">${{ (Number(p.precio) * (1 - Number(p.descuento) / 100)).toFixed(2) }}</span>
+                </template>
+                <template v-else>
+                  <span class="text-gray-700 dark:text-white/80">${{ Number(p.precio).toFixed(2) }}</span>
+                </template>
+              </td>
               <td class="px-4 py-3">
                 <span :class="['text-sm font-medium', p.stock > 0 ? 'text-gray-700 dark:text-white/80' : 'text-error-500']">
                   {{ p.stock }}
@@ -84,8 +113,8 @@
                 </div>
               </td>
             </tr>
-            <tr v-if="!loading && productos.length === 0">
-              <td colspan="7" class="px-4 py-10 text-center text-gray-500 dark:text-gray-400">No hay productos registrados.</td>
+            <tr v-if="!loading && filteredProductos.length === 0">
+              <td colspan="7" class="px-4 py-10 text-center text-gray-500 dark:text-gray-400">No hay productos que coincidan con la búsqueda.</td>
             </tr>
           </tbody>
         </table>
@@ -131,6 +160,22 @@
                         {{ cat.nombre }}
                       </option>
                     </select>
+                  </div>
+                </div>
+
+                <!-- Descripciones -->
+                <div class="space-y-4">
+                  <div>
+                    <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Descripción Corta</label>
+                    <textarea v-model="form.descripcion" required rows="2"
+                      class="w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-gray-800 outline-none focus:border-brand-500 dark:border-gray-700 dark:text-white/90"
+                      placeholder="Breve resumen del producto..."></textarea>
+                  </div>
+                  <div>
+                    <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Descripción Detallada</label>
+                    <textarea v-model="form.descripcion_detallada" required rows="4"
+                      class="w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-gray-800 outline-none focus:border-brand-500 dark:border-gray-700 dark:text-white/90"
+                      placeholder="Ingredientes, beneficios, modo de uso..."></textarea>
                   </div>
                 </div>
 
@@ -293,6 +338,15 @@
                 <p class="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Fecha de Alta</p>
                 <p class="font-medium text-gray-600 dark:text-gray-400">{{ productoSeleccionado.fechaAlta }}</p>
               </div>
+
+              <div class="col-span-2 mt-2">
+                <p class="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Descripción</p>
+                <p class="text-sm text-gray-800 dark:text-white/90">{{ productoSeleccionado.descripcion }}</p>
+              </div>
+              <div class="col-span-2 mt-2">
+                <p class="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Descripción Detallada</p>
+                <p class="text-sm text-gray-800 dark:text-white/90 whitespace-pre-wrap">{{ productoSeleccionado.descripcion_detallada }}</p>
+              </div>
             </div>
 
             <!-- Galería -->
@@ -338,6 +392,10 @@ const saving          = ref(false)
 const errorGlobal     = ref('')
 const formError       = ref('')
 
+// ── Filtros ───────────────────────────────────────────────────────────────────
+const searchQuery     = ref('')
+const filterDate      = ref('')
+
 // ── Modales ───────────────────────────────────────────────────────────────────
 const modalFormVisible     = ref(false)
 const modalDetallesVisible = ref(false)
@@ -348,6 +406,8 @@ const productoSeleccionado = ref<any>(null)
 const initForm = () => ({
   id: null as number | null,
   nombre: '',
+  descripcion: '',
+  descripcion_detallada: '',
   precio: 0,
   descuento: 0,
   stock: 0,
@@ -380,6 +440,30 @@ async function cargarDatos() {
   }
 }
 onMounted(cargarDatos)
+
+// ── Computed (Filtros) ────────────────────────────────────────────────────────
+const filteredProductos = computed(() => {
+  let result = productos.value
+
+  if (searchQuery.value) {
+    const q = searchQuery.value.toLowerCase()
+    result = result.filter(p => 
+      String(p.id).toLowerCase().includes(q) || 
+      p.nombre.toLowerCase().includes(q)
+    )
+  }
+
+  if (filterDate.value) {
+    const dFilter = filterDate.value
+    result = result.filter(p => {
+      if (!p.created_at) return false
+      const pDate = new Date(p.created_at).toISOString().split('T')[0]
+      return pDate === dFilter
+    })
+  }
+
+  return result
+})
 
 // ── Manejo de imágenes ────────────────────────────────────────────────────────
 function onPrincipalChange(e: Event) {
@@ -437,6 +521,8 @@ async function guardarProducto() {
   try {
     const fd = new FormData()
     fd.append('nombre',    form.nombre)
+    fd.append('descripcion', form.descripcion)
+    fd.append('descripcion_detallada', form.descripcion_detallada)
     fd.append('precio',    String(form.precio))
     fd.append('descuento', String(form.descuento || 0))
     fd.append('stock',     String(form.stock || 0))

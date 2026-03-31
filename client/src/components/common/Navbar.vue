@@ -15,19 +15,23 @@
         <li><RouterLink to="/servicios">Servicios</RouterLink></li>
         <li><RouterLink to="/tienda">Tienda</RouterLink></li>
         <li><RouterLink to="/contacto">Contacto</RouterLink></li>
+        <li><button class="btn btn-primary btn-sm" @click="appStore.toggleModal(true)">Agendar Cita</button></li>
       </ul>
 
-      <!-- CTA Button Desktop -->
-      <div class="nav-actions desktop-menu">
-        <button class="btn btn-primary btn-sm" @click="appStore.toggleModal(true)">Agendar Cita</button>
-      </div>
+      <!-- Right Actions (Cart and Hamburger) -->
+      <div class="nav-actions">
+        <button class="cart-icon-btn mr-3" @click="cartStore.toggleCart(true)" aria-label="Abrir carrito">
+          <ShoppingCart :size="20" class="icon" />
+          <span class="cart-badge" v-if="cartStore.cartItemCount > 0">{{ cartStore.cartItemCount }}</span>
+        </button>
 
-      <!-- Hamburger Menu Button -->
-      <button class="hamburger-btn" @click="toggleMenu" :class="{ active: isMenuOpen }" aria-label="Menu">
-        <span></span>
-        <span></span>
-        <span></span>
-      </button>
+        <!-- Hamburger Menu Button -->
+        <button class="hamburger-btn" @click="toggleMenu" :class="{ active: isMenuOpen }" aria-label="Menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
 
     </div>
 
@@ -49,9 +53,12 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
+import { ShoppingCart } from 'lucide-vue-next'
 import { useAppStore } from '../../stores/app'
+import { useCartStore } from '../../stores/cart'
 
 const appStore = useAppStore()
+const cartStore = useCartStore()
 
 const isMenuOpen = ref(false)
 const isScrolled = ref(false)
@@ -125,10 +132,14 @@ onUnmounted(() => {
   display: none;
 }
 
-/* Navigation Links */
 .nav-links {
   display: flex;
-  gap: 2rem;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.nav-actions {
+  display: flex;
   align-items: center;
 }
 
@@ -164,6 +175,49 @@ onUnmounted(() => {
   padding: 0.6rem 1.25rem;
   font-size: 0.95rem;
 }
+
+/* Cart Icon */
+.cart-icon-btn {
+  background: none;
+  border: none;
+  position: relative;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  transition: transform 0.2s ease;
+}
+
+.cart-icon-btn:hover {
+  transform: scale(1.1);
+}
+
+.cart-icon-btn .icon {
+  color: var(--color-secondary);
+}
+
+.cart-badge {
+  position: absolute;
+  top: 0px;
+  right: -5px;
+  background-color: var(--color-primary);
+  color: white;
+  font-size: 0.65rem;
+  font-weight: bold;
+  height: 18px;
+  min-width: 18px;
+  padding: 0 4px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--color-white);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.mr-3 { margin-right: 1rem; }
+.gap-3 { gap: 1rem; }
 
 /* Mobile & Hamburger */
 .hamburger-btn {

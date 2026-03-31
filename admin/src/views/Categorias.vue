@@ -46,9 +46,7 @@
               <td class="px-5 py-4 text-gray-500 text-sm dark:text-gray-400">{{ c.fechaAlta }}</td>
               <td class="px-5 py-4">
                 <div class="flex justify-center gap-3">
-                  <button @click="abrirDetalles(c)" class="text-blue-500 hover:text-blue-700" title="Mostrar Detalles">
-                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                  </button>
+
                   <button @click="abrirEditar(c)" class="text-yellow-500 hover:text-yellow-700" title="Editar">
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                   </button>
@@ -107,40 +105,7 @@
       </template>
     </Modal>
 
-    <!-- ═══════════════════════════════════════════════════════
-         MODAL DETALLES
-    ═══════════════════════════════════════════════════════ -->
-    <Modal v-if="modalDetallesVisible" :fullScreenBackdrop="true" @close="cerrarDetalles">
-      <template #body>
-        <div class="relative w-full max-w-lg rounded-xl bg-white shadow-theme-lg dark:bg-gray-800 m-4 mx-auto my-10">
-          <div class="border-b border-gray-200 dark:border-gray-700 px-6 py-4">
-            <h3 class="text-xl font-bold text-gray-900 dark:text-white">Detalles de la Categoría</h3>
-          </div>
 
-          <div class="p-6 space-y-5" v-if="categoriaSeleccionada">
-            <div>
-              <p class="text-xs text-gray-500 dark:text-gray-400 mb-0.5">ID</p>
-              <p class="font-medium text-gray-800 dark:text-white/90">#{{ categoriaSeleccionada.id }}</p>
-            </div>
-            <div>
-              <p class="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Nombre</p>
-              <p class="font-semibold text-lg text-gray-800 dark:text-white/90">{{ categoriaSeleccionada.nombre }}</p>
-            </div>
-            <div>
-              <p class="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Fecha de Alta</p>
-              <p class="font-medium text-gray-800 dark:text-white/90">{{ categoriaSeleccionada.fechaAlta }}</p>
-            </div>
-          </div>
-
-          <div class="flex justify-end px-6 py-4 border-t border-gray-200 dark:border-gray-700">
-            <button @click="cerrarDetalles"
-              class="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600">
-              Cerrar
-            </button>
-          </div>
-        </div>
-      </template>
-    </Modal>
   </AdminLayout>
 </template>
 
@@ -159,12 +124,10 @@ const formError   = ref('')
 
 // ── Modales ───────────────────────────────────────────────────────────────────
 const modalFormVisible       = ref(false)
-const modalDetallesVisible   = ref(false)
 const isEditing              = ref(false)
-const categoriaSeleccionada  = ref<any>(null)
 
 // ── Formulario ────────────────────────────────────────────────────────────────
-const initForm = () => ({ id: null as number | null, nombre: '' })
+const initForm = () => ({ id: null as string | null, nombre: '' })
 const form = reactive({ ...initForm() })
 
 // ── Cargar ────────────────────────────────────────────────────────────────────
@@ -221,18 +184,10 @@ async function guardarCategoria() {
   }
 }
 
-// ── Detalles ──────────────────────────────────────────────────────────────────
-function abrirDetalles(c: any) {
-  categoriaSeleccionada.value = { ...c }
-  modalDetallesVisible.value = true
-}
-function cerrarDetalles() {
-  modalDetallesVisible.value = false
-  setTimeout(() => { categoriaSeleccionada.value = null }, 300)
-}
+
 
 // ── Eliminar ──────────────────────────────────────────────────────────────────
-async function handleEliminar(id: number) {
+async function handleEliminar(id: string) {
   if (!confirm('¿Deseas eliminar esta categoría?')) return
   try {
     await categoriasApi.delete(id)

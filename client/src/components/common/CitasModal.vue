@@ -31,7 +31,7 @@
                 <label>Teléfono</label>
                 <div class="input-with-icon">
                   <Phone :size="18" class="input-icon" />
-                  <input type="tel" v-model="formData.telefono" placeholder="Ej. 33 1234 5678" required />
+                  <input type="tel" v-model="formData.telefono" @input="formData.telefono = formData.telefono.replace(/\D/g, '')" maxlength="10" placeholder="Ej. 3312345678" required title="Debe contener exactamente 10 dígitos" />
                 </div>
               </div>
 
@@ -69,19 +69,20 @@
               <div class="flex gap-3">
                 <div class="form-group flex-1">
                   <label>Peso Aprox. (kg)</label>
-                  <input type="number" step="0.1" v-model="formData.peso" placeholder="Ej. 70" />
+                  <input type="text" v-model="formData.peso" @input="formData.peso = formData.peso.replace(/\D/g, '').slice(0, 3)" maxlength="3" placeholder="Ej. 70" />
                 </div>
                 
                 <div class="form-group flex-1">
                   <label>Estatura (cm)</label>
-                  <input type="number" v-model="formData.estatura" placeholder="Ej. 170" />
+                  <input type="text" v-model="formData.estatura" @input="formData.estatura = formData.estatura.replace(/\D/g, '').slice(0, 3)" maxlength="3" placeholder="Ej. 170" />
                 </div>
               </div>
               
               <div class="modal-actions mt-4 flex gap-2">
                 <button type="button" class="btn btn-outline flex-1" @click="step = 1">Atrás</button>
-                <button type="submit" class="btn btn-secondary flex-2 flex-center gap-2">
-                  <CheckCircle :size="18" /> Confirmar Cita
+                <button type="submit" class="btn btn-secondary flex-2 flex-center gap-2" :disabled="isSubmitting">
+                  <span v-if="isSubmitting" class="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
+                  <CheckCircle v-else :size="18" /> Confirmar Cita
                 </button>
               </div>
             </div>
@@ -97,6 +98,7 @@
 import { ref, computed } from 'vue'
 import { useAppStore } from '../../stores/app'
 import { X, User, Phone, CalendarDays, ArrowRight, CheckCircle } from 'lucide-vue-next'
+import api from '../../services/api'
 
 const appStore = useAppStore()
 
@@ -127,10 +129,40 @@ const nextStep = () => {
   }
 }
 
-const submitForm = () => {
-  // Aquí se enviaría el form al backend
-  alert('¡Cita solicitada con éxito!\nNos pondremos en contacto muy pronto.')
-  closeModal()
+const isSubmitting = ref(false)
+
+const submitForm = async () => {
+  isSubmitting.value = true
+  try {
+    const payload = {
+      cliente_nombre: formData.value.nombre,
+      cliente_telefono: formData.value.telefono,
+      fecha: formData.value.fecha,
+      atencion_previa: formData.value.atencionPrevia,
+      peso: formData.value.peso || null,
+      estatura: formData.value.estatura || null
+    }
+    
+    await api.post('/citas', payload)
+    
+    alert('¡Cita solicitada con éxito! Nos pondremos en contacto muy pronto.')
+    closeModal()
+    
+    // reset form
+    formData.value = {
+      nombre: '',
+      telefono: '',
+      fecha: '',
+      atencionPrevia: 'no',
+      peso: '',
+      estatura: ''
+    }
+  } catch (error) {
+    console.error('Error al solicitar cita:', error)
+    alert('Oops! Hubo un problema al solicitar la cita. Inténtalo de nuevo.')
+  } finally {
+    isSubmitting.value = false
+  }
 }
 </script>
 

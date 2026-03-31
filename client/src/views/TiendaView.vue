@@ -26,7 +26,7 @@
           <h3 class="section-title">Productos Destacados</h3>
         </div>
         <div class="store-filters">
-           <span class="text-muted">Mostrando 9 productos</span>
+           <span class="text-muted">Mostrando {{ products.length }} productos</span>
         </div>
       </div>
       
@@ -38,9 +38,10 @@
           :style="{ animationDelay: `${index * 0.08}s` }"
         >
           <RouterLink :to="`/tienda/${prod.id}`" class="product-image-link">
-            <!-- Elegant Image Placeholder -->
-            <div class="product-image-placeholder" :style="{ background: prod.bgGradient }">
-               <Package :size="48" class="product-icon" />
+            <!-- Product Image or Placeholder -->
+            <div class="product-image-placeholder" 
+                 :style="prod.imagen_principal ? { backgroundImage: `url(${prod.imagen_principal})`, backgroundSize: 'cover', backgroundPosition: 'center' } : { background: 'linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%)' }">
+               <Package v-if="!prod.imagen_principal" :size="48" class="product-icon" />
                <div class="overlay">
                  <span>Ver Detalle</span>
                </div>
@@ -48,13 +49,28 @@
           </RouterLink>
           
           <div class="product-info">
-            <span class="product-category">{{ prod.category }}</span>
+            <span class="product-category">{{ prod.categoriaNombre || 'Sin Categoría' }}</span>
             <RouterLink :to="`/tienda/${prod.id}`" class="product-title-link">
-              <h4 class="product-title">{{ prod.name }}</h4>
+              <h4 class="product-title">{{ prod.nombre }}</h4>
             </RouterLink>
-            <p class="product-price">${{ prod.price.toFixed(2) }}</p>
+            <p class="product-price">
+              <template v-if="prod.descuento > 0">
+                <span style="font-size: 1rem; color: #aaa; text-decoration: line-through; margin-right: 8px;">
+                  ${{ Number(prod.precio).toFixed(2) }}
+                </span>
+                <span style="color: var(--color-primary)">
+                  ${{ (Number(prod.precio) * (1 - Number(prod.descuento) / 100)).toFixed(2) }}
+                </span>
+                <span style="color:#2ed573; font-size:0.9rem; font-weight:bold; margin-left:8px;">
+                  -{{ prod.descuento }}%
+                </span>
+              </template>
+              <template v-else>
+                ${{ Number(prod.precio).toFixed(2) }}
+              </template>
+            </p>
             
-            <button class="btn btn-primary btn-sm btn-full w-full mt-3 flex-center gap-2">
+            <button class="btn btn-primary btn-sm btn-full w-full mt-3 flex-center gap-2" @click="cartStore.addToCart(prod)">
               <ShoppingCart :size="16" />
               Añadir al carrito
             </button>
@@ -66,20 +82,23 @@
 </template>
 
 <script setup>
+import { ref, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { Package, ShoppingCart } from 'lucide-vue-next'
+import api from '../services/api'
+import { useCartStore } from '../stores/cart'
 
-const products = [
-  { id: 1, name: 'Whey Protein Isolate Premium', price: 950.00, category: 'Proteínas', bgGradient: 'linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%)' },
-  { id: 2, name: 'Multivitamínico Core+ Mujer', price: 420.00, category: 'Vitaminas', bgGradient: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)' },
-  { id: 3, name: 'Omega 3 Ultra Puro', price: 580.00, category: 'Suplementos', bgGradient: 'linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)' },
-  { id: 4, name: 'Magnesio Bisglicinato 400mg', price: 350.00, category: 'Minerales', bgGradient: 'linear-gradient(135deg, #d299c2 0%, #fef9d7 100%)' },
-  { id: 5, name: 'Probióticos Avanzados 50B', price: 690.00, category: 'Salud Digestiva', bgGradient: 'linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%)' },
-  { id: 6, name: 'Colágeno Hidrolizado + Vitamina C', price: 720.00, category: 'Piel y Articulaciones', bgGradient: 'linear-gradient(135deg, #accbee 0%, #e7f0fd 100%)' },
-  { id: 7, name: 'BCAAs + Glutamina Recovery', price: 640.00, category: 'Rendimiento', bgGradient: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)' },
-  { id: 8, name: 'Extracto de Ashwagandha Root', price: 480.00, category: 'Adaptógenos', bgGradient: 'linear-gradient(135deg, #cfd9df 0%, #e2ebf0 100%)' },
-  { id: 9, name: 'Creatina Monohidratada Creapure', price: 590.00, category: 'Rendimiento', bgGradient: 'linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%)' }
-]
+const cartStore = useCartStore()
+const products = ref([])
+
+onMounted(async () => {
+  try {
+    const data = await api.get('/productos')
+    products.value = data
+  } catch (error) {
+    console.error('Error al cargar productos:', error)
+  }
+})
 </script>
 
 <style scoped>

@@ -1,4 +1,5 @@
 import { Router } from 'express'
+import { verificarToken } from '../middleware/authMiddleware.js'
 import {
   getCategorias,
   getCategoriaById,
@@ -11,8 +12,10 @@ const router = Router()
 
 router.get('/',       getCategorias)
 router.get('/:id',    getCategoriaById)
-router.post('/',      createCategoria)
-router.put('/:id',    updateCategoria)
-router.delete('/:id', deleteCategoria)
+
+// Rutas protegidas
+router.post('/',      verificarToken, createCategoria)
+router.put('/:id',    verificarToken, updateCategoria)
+router.delete('/:id', verificarToken, deleteCategoria)
 
 export default router

@@ -1,11 +1,12 @@
 import pool from '../db/pool.js'
+import { generarIdUnico } from '../utils/generarId.js'
 
 // ─── GET /api/categorias ───────────────────────────────────────────────────
 export async function getCategorias(req, res) {
   try {
     const result = await pool.query(
       `SELECT id, nombre,
-              TO_CHAR(created_at, 'YYYY-MM-DD') AS "fechaAlta"
+              TO_CHAR(fecha_creacion, 'YYYY-MM-DD') AS "fechaAlta"
        FROM categorias
        WHERE deleted_at IS NULL
        ORDER BY id ASC`
@@ -23,7 +24,7 @@ export async function getCategoriaById(req, res) {
   try {
     const result = await pool.query(
       `SELECT id, nombre,
-              TO_CHAR(created_at, 'YYYY-MM-DD') AS "fechaAlta"
+              TO_CHAR(fecha_creacion, 'YYYY-MM-DD') AS "fechaAlta"
        FROM categorias
        WHERE id = $1 AND deleted_at IS NULL`,
       [id]
@@ -46,11 +47,13 @@ export async function createCategoria(req, res) {
   }
 
   try {
+    const newId = await generarIdUnico('categorias')
+
     const result = await pool.query(
-      `INSERT INTO categorias (nombre)
-       VALUES ($1)
-       RETURNING id, nombre, TO_CHAR(created_at, 'YYYY-MM-DD') AS "fechaAlta"`,
-      [nombre]
+      `INSERT INTO categorias (id, nombre)
+       VALUES ($1, $2)
+       RETURNING id, nombre, TO_CHAR(fecha_creacion, 'YYYY-MM-DD') AS "fechaAlta"`,
+      [newId, nombre]
     )
     res.status(201).json(result.rows[0])
   } catch (err) {
@@ -76,7 +79,7 @@ export async function updateCategoria(req, res) {
       `UPDATE categorias
        SET nombre=$1, updated_at=NOW()
        WHERE id=$2 AND deleted_at IS NULL
-       RETURNING id, nombre, TO_CHAR(created_at, 'YYYY-MM-DD') AS "fechaAlta"`,
+       RETURNING id, nombre, TO_CHAR(fecha_creacion, 'YYYY-MM-DD') AS "fechaAlta"`,
       [nombre, id]
     )
     if (!result.rows.length)

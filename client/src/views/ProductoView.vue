@@ -8,38 +8,63 @@
         <span class="active">Detalle del Producto</span>
       </div>
 
-      <div class="product-layout">
+      <div v-if="loading" class="flex-center" style="min-height: 400px; color: var(--color-primary)">
+        <p>Cargando producto...</p>
+      </div>
+
+      <div v-else-if="!product" class="flex-center" style="min-height: 400px; color: red">
+        <p>Producto no encontrado.</p>
+      </div>
+
+      <div v-else class="product-layout">
         <!-- Left: Image Gallery / Placeholder -->
         <div class="product-gallery slide-in-left">
-          <div class="main-image shadow-elegant">
-            <Package :size="80" class="placeholder-icon" />
+          <div class="main-image shadow-elegant" :style="product.imagen_principal ? { backgroundImage: `url(${product.imagen_principal})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}">
+            <Package v-if="!product.imagen_principal" :size="80" class="placeholder-icon" />
             
             <!-- Floating Decorative Badges -->
             <div class="badge badge-top">⭐ Top Seller</div>
             <div class="badge badge-bottom">100% Puro</div>
           </div>
-          <!-- Thumbnail placeholders -->
-          <div class="thumbnails mt-3">
-            <div class="thumbnail active"></div>
-            <div class="thumbnail"></div>
-            <div class="thumbnail"></div>
+          <!-- Thumbnails (Galería real si aplica) -->
+          <div class="thumbnails mt-3" v-if="product.galeria && product.galeria.length > 0">
+            <div class="thumbnail" v-for="(img, idx) in product.galeria" :key="idx" 
+                 :style="{ backgroundImage: `url(${img})`, backgroundSize: 'cover', backgroundPosition: 'center' }"></div>
+          </div>
+          <div class="thumbnails mt-3" v-else>
+            <!-- No gallery -->
           </div>
         </div>
 
         <!-- Right: Product Information -->
         <div class="product-details slide-in-right">
-          <span class="product-category">Nutrición & Suplementos SKU-{{ $route.params.id }}</span>
-          <h1 class="product-title">Nombre del Producto de Alta Calidad</h1>
+          <span class="product-category">{{ product.categoriaNombre || 'Sin Categoría' }} | SKU-{{ product.id }}</span>
+          <h1 class="product-title">{{ product.nombre }}</h1>
           
           <div class="rating-stars flex items-center gap-1 mb-2">
             <Star :size="16" class="star" v-for="i in 5" :key="i" />
-            <span class="text-sm ml-2 text-muted">(45 opiniones)</span>
+            <span class="text-sm ml-2 text-muted">(Stock: {{ product.stock }})</span>
           </div>
 
-          <p class="product-price">$590.00 <span class="price-strikethrough">$650.00</span></p>
+          <p class="product-price flex items-center">
+            <template v-if="product.descuento > 0">
+              <span class="price-strikethrough mr-2" style="font-size: 1.2rem; color: #aaa; margin-right: 0.5rem;">
+                ${{ Number(product.precio).toFixed(2) }}
+              </span>
+              <span>
+                ${{ (Number(product.precio) * (1 - Number(product.descuento) / 100)).toFixed(2) }}
+              </span>
+              <span style="color:#2ed573; margin-left:0.5rem; font-size: 1rem; font-weight: bold;">
+                 -{{ product.descuento }}%
+              </span>
+            </template>
+            <template v-else>
+              ${{ Number(product.precio).toFixed(2) }}
+            </template>
+          </p>
 
-          <p class="product-description">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Vestibulum tortor quam, feugiat vitae, ultricies eget, tempor sit amet, ante.
+          <p class="product-description whitespace-pre-wrap">
+            {{ product.descripcion }}
           </p>
 
           <div class="product-features">
@@ -56,7 +81,7 @@
               <input type="number" v-model="qty" min="1" readonly />
               <button @click="qty++" aria-label="Increase quantity">+</button>
             </div>
-            <button class="btn btn-primary btn-lg btn-pulse flex-1 flex-center gap-2">
+            <button class="btn btn-primary btn-lg btn-pulse flex-1 flex-center gap-2" @click="cartStore.addToCart(product, qty)">
               <ShoppingCart :size="18" />
               Añadir al carrito
             </button>
@@ -69,11 +94,11 @@
             </div>
           </div>
           
-          <div class="product-accordion mt-4">
-            <!-- Simulated Details Section -->
+          <div class="product-accordion mt-4" v-if="product.descripcion_detallada">
+            <!-- Detalles Section -->
             <div class="accordion-item">
                <h4><Info :size="16"/> Descripción Detallada</h4>
-               <p class="text-sm text-muted mt-2">Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident.</p>
+               <p class="text-sm text-muted mt-2 whitespace-pre-wrap">{{ product.descripcion_detallada }}</p>
             </div>
           </div>
         </div>
@@ -83,14 +108,28 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import { Package, ChevronRight, ShoppingCart, Star, CheckCircle, Truck, Info } from 'lucide-vue-next'
+import api from '../services/api'
+import { useCartStore } from '../stores/cart'
 
 const route = useRoute()
+const cartStore = useCartStore()
 const qty = ref(1)
+const product = ref(null)
+const loading = ref(true)
 
-// En una app real haríamos un fetch o uso del store basándonos en route.params.id
+onMounted(async () => {
+  try {
+    const data = await api.get(`/productos/${route.params.id}`)
+    product.value = data
+  } catch (error) {
+    console.error('Error al cargar producto:', error)
+  } finally {
+    loading.value = false
+  }
+})
 </script>
 
 <style scoped>

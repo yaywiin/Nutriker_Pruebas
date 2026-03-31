@@ -6,6 +6,9 @@ import { fileURLToPath } from 'url'
 import usuariosRouter from './routes/usuarios.js'
 import productosRouter from './routes/productos.js'
 import categoriasRouter from './routes/categorias.js'
+import pedidosRouter from './routes/pedidos.js'
+import citasRouter from './routes/citas.js'
+import authRouter from './routes/auth.js'
 
 dotenv.config()
 
@@ -30,9 +33,12 @@ app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() })
 })
 
+app.use('/api/auth',       authRouter)
 app.use('/api/usuarios',   usuariosRouter)
 app.use('/api/productos',  productosRouter)
 app.use('/api/categorias', categoriasRouter)
+app.use('/api/pedidos',    pedidosRouter)
+app.use('/api/citas',      citasRouter)
 
 // ── 404 catch ───────────────────────────────────────────────────────────────
 app.use((req, res) => {

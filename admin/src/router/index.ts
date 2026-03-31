@@ -7,6 +7,12 @@ const router = createRouter({
   },
   routes: [
     {
+      path: '/login',
+      name: 'Login',
+      component: () => import('../views/Auth/SignIn.vue'),
+      meta: { title: 'Iniciar Sesión' },
+    },
+    {
       path: '/',
       redirect: '/usuarios',
     },
@@ -47,5 +53,14 @@ export default router
 
 router.beforeEach((to, from, next) => {
   document.title = `Bioclinik Admin | ${to.meta.title ?? ''}`
-  next()
+  
+  const isAuthenticated = localStorage.getItem('admin_logged') === 'true'
+  
+  if (to.path !== '/login' && !isAuthenticated) {
+    next('/login')
+  } else if (to.path === '/login' && isAuthenticated) {
+    next('/usuarios')
+  } else {
+    next()
+  }
 })

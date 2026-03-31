@@ -3,6 +3,7 @@
     <div class="flex items-center justify-between mb-6">
       <h2 class="text-2xl font-bold text-gray-800 dark:text-white/90">Usuarios</h2>
       <button
+        v-if="userRole === 'Administrador'"
         @click="abrirAgregar"
         class="rounded-lg bg-brand-500 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-300"
       >
@@ -68,12 +69,14 @@
                   <button @click="abrirDetalles(usuario)" class="text-blue-500 hover:text-blue-700" title="Mostrar Detalles">
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                   </button>
-                  <button @click="abrirEditar(usuario)" class="text-yellow-500 hover:text-yellow-700" title="Editar">
-                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                  </button>
-                  <button @click="handleEliminar(usuario.id)" class="text-red-500 hover:text-red-700" title="Eliminar">
-                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                  </button>
+                  <template v-if="userRole === 'Administrador'">
+                    <button @click="abrirEditar(usuario)" class="text-yellow-500 hover:text-yellow-700" title="Editar">
+                      <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    </button>
+                    <button @click="handleEliminar(usuario.id)" class="text-red-500 hover:text-red-700" title="Eliminar">
+                      <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    </button>
+                  </template>
                 </div>
               </td>
             </tr>
@@ -175,6 +178,10 @@
                 <p class="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Correo</p>
                 <p class="font-medium text-gray-800 dark:text-white/90">{{ usuarioSeleccionado.correo }}</p>
               </div>
+              <div class="col-span-2" v-if="userRole === 'Administrador'">
+                <p class="text-xs text-brand-500 font-semibold mb-0.5">Contraseña (Encriptada o Protegida)</p>
+                <p class="font-mono bg-gray-100 dark:bg-gray-700/50 p-2 rounded text-gray-800 dark:text-white/90 break-all">{{ usuarioSeleccionado.contrasena || 'No disponible' }}</p>
+              </div>
               <div>
                 <p class="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Rol</p>
                 <span :class="['inline-block rounded-full px-2 py-0.5 text-theme-xs font-medium',
@@ -215,6 +222,7 @@ const loading     = ref(false)
 const saving      = ref(false)
 const errorGlobal = ref('')
 const formError   = ref('')
+const userRole    = ref('')
 
 // ── Modales ───────────────────────────────────────────────────────────────────
 const modalFormVisible     = ref(false)
@@ -223,13 +231,25 @@ const isEditing            = ref(false)
 const usuarioSeleccionado  = ref<any>(null)
 
 // ── Formulario ────────────────────────────────────────────────────────────────
-const initForm = () => ({ id: null as number | null, nombre: '', usuario: '', correo: '', contrasena: '', rol: 'Asistente' })
+const initForm = () => ({ id: null as string | null, nombre: '', usuario: '', correo: '', contrasena: '', rol: 'Asistente' })
 const form = reactive({ ...initForm() })
 
 // ── Cargar datos desde la API ─────────────────────────────────────────────────
 async function cargarUsuarios() {
   loading.value = true
   errorGlobal.value = ''
+  
+  // Obtener rol del usuario actual
+  const storedUser = localStorage.getItem('admin_user')
+  if (storedUser) {
+    try {
+      const parsed = JSON.parse(storedUser)
+      userRole.value = parsed.rol || ''
+    } catch (e) {
+      console.error('Error al parsear admin_user', e)
+    }
+  }
+
   try {
     usuarios.value = await usuariosApi.getAll()
   } catch (e: any) {
@@ -300,7 +320,7 @@ function cerrarDetalles() {
 }
 
 // ── Eliminar (soft delete) ────────────────────────────────────────────────────
-async function handleEliminar(id: number) {
+async function handleEliminar(id: string) {
   if (!confirm('¿Estás seguro de que deseas eliminar a este usuario?')) return
   try {
     await usuariosApi.delete(id)
