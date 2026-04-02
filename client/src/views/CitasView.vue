@@ -153,52 +153,39 @@
                         v-model="form.fecha"
                         type="date"
                         :min="fechaMinima"
-                        @change="onFechaChange"
                       />
                     </div>
                     <span v-if="errores.fecha" class="field-error">{{ errores.fecha }}</span>
                   </div>
-                </div>
 
-                <!-- Horarios -->
-                <div class="horarios-section" :class="{ 'is-loading': cargandoHorarios }">
-                  <label class="horarios-label">
-                    Selecciona un horario *
-                    <span v-if="cargandoHorarios" class="loading-chip">Consultando disponibilidad...</span>
-                    <span v-else-if="form.fecha" class="available-chip">{{ horariosDisponibles.length }} disponibles</span>
-                  </label>
-
-                  <div v-if="!form.fecha" class="horarios-placeholder">
-                    <span>📅 Primero selecciona una fecha para ver los horarios disponibles</span>
+                  <div class="field-group" :class="{ 'has-error': errores.horario }">
+                    <label for="horario">
+                      Horario *
+                      <span v-if="cargandoHorarios" class="loading-chip ml-2 bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded text-xs">Consultando...</span>
+                    </label>
+                    <div class="input-wrap">
+                      <span class="input-icon">🕒</span>
+                      <select
+                        id="horario"
+                        v-model="form.horario"
+                        :disabled="!form.fecha || cargandoHorarios"
+                        class="select-input"
+                      >
+                        <option value="" disabled>
+                          {{ !form.fecha ? 'Selecciona una fecha primero' : (cargandoHorarios ? 'Cargando...' : 'Elige tu horario') }}
+                        </option>
+                        <option
+                          v-for="h in TODOS_LOS_HORARIOS"
+                          :key="h"
+                          :value="h"
+                          :disabled="horariosOcupados.includes(h)"
+                        >
+                          {{ h }} {{ horariosOcupados.includes(h) ? '(Ocupado)' : 'hrs' }}
+                        </option>
+                      </select>
+                    </div>
+                    <span v-if="errores.horario" class="field-error">{{ errores.horario }}</span>
                   </div>
-
-                  <div v-else-if="cargandoHorarios" class="horarios-skeleton">
-                    <div v-for="i in 10" :key="i" class="skeleton-chip"></div>
-                  </div>
-
-                  <div v-else-if="horariosDisponibles.length === 0" class="horarios-agotados">
-                    <span>😔</span>
-                    <p>No hay horarios disponibles para este día. Por favor elige otra fecha.</p>
-                  </div>
-
-                  <div v-else class="horarios-grid">
-                    <button
-                      v-for="horario in TODOS_LOS_HORARIOS"
-                      :key="horario"
-                      type="button"
-                      class="horario-chip"
-                      :class="{
-                        'is-selected': form.horario === horario,
-                        'is-ocupado': horariosOcupados.includes(horario)
-                      }"
-                      :disabled="horariosOcupados.includes(horario)"
-                      @click="seleccionarHorario(horario)"
-                    >
-                      {{ horario }}
-                      <span v-if="horariosOcupados.includes(horario)" class="chip-tag">Ocupado</span>
-                    </button>
-                  </div>
-                  <span v-if="errores.horario" class="field-error">{{ errores.horario }}</span>
                 </div>
               </fieldset>
 
@@ -284,7 +271,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
@@ -324,30 +311,26 @@ const horariosDisponibles = computed(() =>
   TODOS_LOS_HORARIOS.filter(h => !horariosOcupados.value.includes(h))
 )
 
-// ── Métodos ─────────────────────────────────────────────
-async function onFechaChange() {
+watch(() => form.fecha, async (newVal) => {
   form.horario = ''
   errores.fecha = ''
-  if (!form.fecha) return
+  if (!newVal) return
 
   cargandoHorarios.value = true
   horariosOcupados.value = []
 
   try {
-    const res = await fetch(`${API_URL}/api/citas/horarios-ocupados?fecha=${form.fecha}`)
-    const data = await res.json()
-    horariosOcupados.value = data.ocupados || []
+    const res = await fetch(`${API_URL}/api/citas/horarios-ocupados?fecha=${newVal}`)
+    if(res.ok) {
+      const data = await res.json()
+      horariosOcupados.value = data.ocupados || []
+    }
   } catch (e) {
     console.error('Error al consultar horarios:', e)
   } finally {
     cargandoHorarios.value = false
   }
-}
-
-function seleccionarHorario(horario) {
-  form.horario = horario
-  errores.horario = ''
-}
+})
 
 function validarCampo(campo) {
   const valor = form[campo]?.trim()
@@ -388,8 +371,8 @@ async function submitForm() {
       fecha: form.fecha,
       horario: form.horario,
       atencion_previa: form.atencion_previa,
-      peso: form.peso || null,
-      estatura: form.estatura || null
+      peso: form.peso && !isNaN(form.peso) ? parseFloat(form.peso) : null,
+      estatura: form.estatura && !isNaN(form.estatura) ? parseFloat(form.estatura) : null
     }
 
     const res = await fetch(`${API_URL}/api/citas`, {
@@ -688,7 +671,8 @@ legend {
   z-index: 1;
 }
 
-.input-wrap input {
+.input-wrap input,
+.select-input {
   width: 100%;
   padding: 0.8rem 1rem 0.8rem 2.5rem;
   border: 1.5px solid #e2e8f0;
@@ -701,146 +685,20 @@ legend {
   outline: none;
 }
 
-.input-wrap input:focus {
+.input-wrap input:focus,
+.select-input:focus {
   border-color: var(--color-primary);
   background: white;
   box-shadow: 0 0 0 3px rgba(25, 98, 200, 0.12);
 }
 
-.has-error .input-wrap input {
+.has-error .input-wrap input,
+.has-error .select-input {
   border-color: #e53e3e;
   background: #fff5f5;
 }
 
 .field-error {
-  font-size: 0.78rem;
-  color: #e53e3e;
-  font-weight: 600;
-}
-
-/* ── Horarios Section ────────────────────────────────── */
-.horarios-section { margin-top: 1.5rem; }
-
-.horarios-label {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: var(--color-text);
-  margin-bottom: 1rem;
-}
-
-.loading-chip, .available-chip {
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 0.2rem 0.65rem;
-  border-radius: var(--radius-full);
-}
-.loading-chip { background: #fef3c7; color: #92400e; }
-.available-chip { background: #d1fae5; color: #065f46; }
-
-.horarios-placeholder {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem;
-  background: var(--color-bg);
-  border: 2px dashed #cbd5e0;
-  border-radius: var(--radius-md);
-  color: var(--color-text-light);
-  font-size: 0.9rem;
-  text-align: center;
-}
-
-.horarios-agotados {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 2rem;
-  background: #fff5f5;
-  border-radius: var(--radius-md);
-  text-align: center;
-  font-size: 0.9rem;
-  color: #742a2a;
-}
-.horarios-agotados span { font-size: 2rem; }
-
-.horarios-skeleton {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-  gap: 0.6rem;
-}
-.skeleton-chip {
-  height: 42px;
-  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
-  background-size: 200%;
-  border-radius: var(--radius-md);
-  animation: shimmer 1.4s infinite;
-}
-@keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-
-.horarios-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(82px, 1fr));
-  gap: 0.6rem;
-}
-
-.horario-chip {
-  position: relative;
-  background: #f0f5ff;
-  border: 1.5px solid #c3d4f5;
-  color: var(--color-primary);
-  font-size: 0.875rem;
-  font-weight: 700;
-  font-family: var(--font-main);
-  padding: 0.6rem 0.5rem;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: all 0.18s ease;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-}
-
-.horario-chip:hover:not(:disabled) {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
-  color: white;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(25, 98, 200, 0.3);
-}
-
-.horario-chip.is-selected {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
-  color: white;
-  box-shadow: 0 4px 12px rgba(25, 98, 200, 0.35);
-  transform: translateY(-1px);
-}
-
-.horario-chip.is-ocupado {
-  background: #f7fafc;
-  border-color: #e2e8f0;
-  color: #a0aec0;
-  cursor: not-allowed;
-  text-decoration: line-through;
-}
-
-.chip-tag {
-  font-size: 0.6rem;
-  font-weight: 600;
-  opacity: 0.75;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
-/* ── Atención Previa (Radios) ────────────────────────── */
 .atencion-group { margin-bottom: 1.25rem; }
 .atencion-group > label { margin-bottom: 0.75rem; }
 
