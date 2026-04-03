@@ -232,7 +232,7 @@ const appStore = useAppStore()
   margin-bottom: 1.5rem;
 }
 .badge-secondary {
-  background-color: #E6EFFF;
+  background-color: #e2f7f7;
   color: var(--color-secondary);
 }
 .hero-title {
@@ -247,10 +247,11 @@ const appStore = useAppStore()
   .hero-title { font-size: 3.5rem; }
 }
 .text-gradient {
-  background: linear-gradient(135deg, var(--color-primary), #448cf1);
+  background: linear-gradient(135deg, var(--color-primary) 0%, #53cfd3 50%, var(--color-primary-light) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  filter: drop-shadow(0 2px 4px rgba(51, 170, 174, 0.1));
 }
 .hero-subtitle {
   font-size: 1.1rem;
@@ -386,7 +387,7 @@ const appStore = useAppStore()
   transform: translateY(-5px);
   background-color: var(--color-white);
   box-shadow: var(--shadow-lg);
-  border-color: rgba(25, 98, 200, 0.1);
+  border-color: rgba(51, 170, 174, 0.1);
 }
 .feature-icon {
   width: 64px;
@@ -509,11 +510,11 @@ const appStore = useAppStore()
 .form-input:focus, .form-textarea:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(25, 98, 200, 0.1);
+  box-shadow: 0 0 0 3px rgba(51, 170, 174, 0.15);
 }
 
 .newsletter-card {
-  background: linear-gradient(135deg, var(--color-primary), #114a9b);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
   padding: 3rem;
   border-radius: var(--radius-xl);
   color: var(--color-white);
