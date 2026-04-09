@@ -1,7 +1,7 @@
 {
-  "name": "bioclinik-server",
+  "name": "nutriker-server",
   "version": "1.0.0",
-  "description": "API Server para Bioclinik",
+  "description": "API Server para NutriKer",
   "main": "index.js",
   "type": "module",
   "scripts": {

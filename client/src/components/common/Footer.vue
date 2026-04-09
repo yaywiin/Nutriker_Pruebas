@@ -13,7 +13,7 @@
         <div class="footer-grid">
           <!-- Brand Column -->
           <div class="footer-brand fade-in-up">
-            <span class="footer-brand-text">Bioclinik</span>
+            <span class="footer-brand-text">NutriKer</span>
             <p class="brand-desc mt-4">Clínica Nutricional y del Metabolismo centrada en tu bienestar integral con enfoques científicos y personalizados.</p>
             
             <div class="social-links mt-4">
@@ -28,10 +28,10 @@
           <div class="footer-links fade-in-up" style="animation-delay: 0.1s;">
             <h3>Enlaces Rápidos</h3>
             <ul>
-              <li><RouterLink to="/" class="hover-slide">Inicio</RouterLink></li>
-              <li><RouterLink to="/nosotros" class="hover-slide">Nosotros</RouterLink></li>
-              <li><RouterLink to="/servicios" class="hover-slide">Servicios</RouterLink></li>
-              <li><RouterLink to="/tienda" class="hover-slide">Tienda</RouterLink></li>
+              <li><a href="#inicio" class="hover-slide">Inicio</a></li>
+              <li><a href="#nosotros" class="hover-slide">Nosotros</a></li>
+              <li><a href="#servicios" class="hover-slide">Servicios</a></li>
+              <li><a href="#contacto" class="hover-slide">Contacto</a></li>
             </ul>
           </div>
 
@@ -49,7 +49,7 @@
               </li>
               <li>
                 <Mail :size="18" class="contact-icon" />
-                <span>hola@bioclinik.com</span>
+                <span>hola@nutriker.com</span>
               </li>
             </ul>
             <div class="mt-4">
@@ -59,7 +59,7 @@
         </div>
         
         <div class="footer-bottom">
-          <p>&copy; {{ new Date().getFullYear() }} Bioclinik. Todos los derechos reservados.</p>
+          <p>&copy; {{ new Date().getFullYear() }} NutriKer. Todos los derechos reservados.</p>
         </div>
       </div>
     </footer>
@@ -67,7 +67,6 @@
 </template>
 
 <script setup>
-import { RouterLink } from 'vue-router'
 import { Facebook, Twitter, Instagram, Linkedin, MapPin, Phone, Mail } from 'lucide-vue-next'
 import { useAppStore } from '../../stores/app'
 

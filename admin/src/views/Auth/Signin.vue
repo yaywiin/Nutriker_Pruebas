@@ -2,7 +2,7 @@
   <div class="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 dark:bg-gray-900">
     <div class="sm:mx-auto sm:w-full sm:max-w-md">
       <!-- Logo Oficial -->
-      <img class="mx-auto h-16 w-auto object-contain" src="/images/logo/logo-bioclinik.png" alt="Bioclinik" />
+      <img class="mx-auto h-16 w-auto object-contain" src="/images/logo/logo-nutriker.png" alt="NutriKer" />
       <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
         Acceso al Panel
       </h2>

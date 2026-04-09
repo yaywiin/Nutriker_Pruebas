@@ -1,18 +1,20 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Nunito:wght@300;400;600;700;800&display=swap');
 :root {
-  /* Brand Colors */
-  --color-primary: #33AAAE;
-  --color-primary-dark: #267f83;
-  --color-primary-light: #5ec8cc;
-  --color-secondary: #0d3a3c;
-  --color-bg: #f2fbfb;
+  /* Brand Colors (NutriKer) */
+  --color-primary: #4A8C5B; /* Verde Oscuro Principal */
+  --color-primary-dark: #3a7048;
+  --color-primary-light: #7ABB89; /* Verde claro de la hoja */
+  --color-secondary: #A84A54; /* Rojo/Marrón de corazón */
+  --color-bg: #F8F6F0; /* Cream editorial background */
   --color-white: #ffffff;
   
   /* Text Colors */
-  --color-text: #1a202c;
-  --color-text-light: #4a5568;
+  --color-text: #2f2e2c; /* Softer, richer dark text */
+  --color-text-light: #7a7672;
   
   /* Typography */
   --font-main: 'Nunito', sans-serif;
+  --font-serif: 'Playfair Display', serif;
   
   /* Border Radius (Roundness) */
   --radius-full: 9999px;
@@ -25,6 +27,14 @@
   --shadow-md: 0 10px 25px rgba(13, 58, 60, 0.12);
   --shadow-lg: 0 20px 40px rgba(51, 170, 174, 0.18);
 }
+
+html, body {
+  background-color: var(--color-bg);
+  scroll-behavior: smooth;
+  /* Removed scroll-snap for asymmetric free-flow */
+}
+
+/* Smooth scrolling rule added above */
 
 * {
   box-sizing: border-box;
@@ -57,6 +67,12 @@ img {
   display: block;
 }
 
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-serif);
+  color: var(--color-secondary);
+  font-weight: 700;
+}
+
 /* Base Layout Classes */
 .container {
   width: 100%;
@@ -69,11 +85,12 @@ img {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  position: relative;
 }
 
 .layout-main {
   flex: 1;
-  padding-top: 80px; /* Offset for fixed navbar */
+  width: 100%;
 }
 
 /* Global Button Styles */
@@ -131,3 +148,5 @@ img {
 .mb-4 { margin-bottom: 1rem; }
 .mt-8 { margin-top: 2rem; }
 .mb-8 { margin-bottom: 2rem; }
+
+/* Las clases .fashion-layout se trasladan a diseños asimétricos específicos en cada componente. */

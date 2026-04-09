@@ -26,7 +26,7 @@
           <div class="info-card">
             <div class="info-icon">📍</div>
             <h3>Ubicación</h3>
-            <p>Consultorio Bioclinik, Ciudad de Guatemala</p>
+            <p>Consultorio NutriKer, Ciudad de Guatemala</p>
           </div>
           <div class="info-card">
             <div class="info-icon">🕐</div>
@@ -73,7 +73,7 @@
                 <span class="success-badge">📅 {{ formatearFecha(form.fecha) }}</span>
                 <span class="success-badge">🕐 {{ form.horario }} hrs</span>
               </div>
-              <p class="success-note">Te esperamos en Bioclinik. Ante cualquier cambio, contáctanos con anticipación.</p>
+              <p class="success-note">Te esperamos en NutriKer. Ante cualquier cambio, contáctanos con anticipación.</p>
               <button class="btn btn-primary" @click="reiniciar">Agendar otra cita</button>
             </div>
           </transition>
@@ -197,7 +197,7 @@
                 </legend>
 
                 <div class="field-group atencion-group">
-                  <label>¿Has tenido atención previa en Bioclinik?</label>
+                  <label>¿Has tenido atención previa en NutriKer?</label>
                   <div class="radio-group">
                     <label class="radio-option" :class="{ active: form.atencion_previa === 'si' }">
                       <input type="radio" v-model="form.atencion_previa" value="si" />

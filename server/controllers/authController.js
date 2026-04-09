@@ -2,7 +2,7 @@ import pool from '../db/pool.js'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 
-const JWT_SECRET = process.env.JWT_SECRET || 'bioclinik_secreto_super_seguro_2024'
+const JWT_SECRET = process.env.JWT_SECRET || 'nutriker_secreto_super_seguro_2024'
 
 export async function login(req, res) {
   const { email, password } = req.body

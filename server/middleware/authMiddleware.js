@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken'
 
-const JWT_SECRET = process.env.JWT_SECRET || 'bioclinik_secreto_super_seguro_2024'
+const JWT_SECRET = process.env.JWT_SECRET || 'nutriker_secreto_super_seguro_2024'
 
 export function verificarToken(req, res, next) {
   const authHeader = req.headers.authorization

@@ -50,7 +50,7 @@ const dropdownRef = ref(null)
 // Datos del usuario logueado
 const userData = ref({
   nombre: 'Administrador',
-  correo: 'admin@bioclinik.com'
+  correo: 'admin@nutriker.com'
 })
 
 const userName = computed(() => userData.value.nombre)

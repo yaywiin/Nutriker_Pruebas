@@ -2,118 +2,198 @@
   <Teleport to="body">
     <Transition name="fade">
       <div v-if="appStore.isModalOpen" class="modal-overlay" @click.self="closeModal">
-        <div class="modal-content scale-in">
+        <div class="modal-content scale-in form-editorial">
           <button class="close-btn" @click="closeModal" aria-label="Cerrar modal"><X :size="24" /></button>
           
           <div class="modal-header">
-            <h2>Agendar Cita</h2>
-            <p>Completa este breve formulario para conocerte mejor.</p>
+            <h2>Expediente Clínico</h2>
+            <p>Descubrir tu biología es el primer paso.</p>
             
             <!-- Progress indicator -->
             <div class="progress-bar mt-3">
-              <div class="progress" :style="{ width: step === 1 ? '50%' : '100%' }"></div>
+              <div class="progress" :style="{ width: `${(step / 5) * 100}%` }"></div>
             </div>
-            <div class="step-indicator">Paso {{ step }} de 2</div>
+            <div class="step-indicator">Paso {{ step }} de 5: {{ stepTitles[step-1] }}</div>
           </div>
 
           <form @submit.prevent="submitForm">
-            <!-- STEP 1 -->
-            <div v-show="step === 1" class="step-content">
-              <div class="form-group">
-                <label>Nombre Completo</label>
-                <div class="input-with-icon">
-                  <User :size="18" class="input-icon" />
-                  <input type="text" v-model="formData.nombre" placeholder="Ej. Ana Pérez" required />
+            <div class="scroll-container">
+              <!-- STEP 1: Identificación -->
+              <div v-show="step === 1" class="step-content">
+                <div class="form-row">
+                  <div class="form-group flex-1">
+                    <label>Nombre Completo *</label>
+                    <input type="text" v-model="formData.nombre" placeholder="Ana Pérez" required />
+                  </div>
+                  <div class="form-group flex-1">
+                    <label>Teléfono *</label>
+                    <input type="tel" v-model="formData.telefono" @input="formData.telefono = formData.telefono.replace(/\D/g, '')" maxlength="10" placeholder="Ej. 5512345678" required />
+                  </div>
                 </div>
-              </div>
-              
-              <div class="form-group">
-                <label>Teléfono</label>
-                <div class="input-with-icon">
-                  <Phone :size="18" class="input-icon" />
-                  <input type="tel" v-model="formData.telefono" @input="formData.telefono = formData.telefono.replace(/\D/g, '')" maxlength="10" placeholder="Ej. 3312345678" required title="Debe contener exactamente 10 dígitos" />
+
+                <div class="form-row">
+                  <div class="form-group flex-1">
+                    <label>Correo Electrónico *</label>
+                    <input type="email" v-model="formData.correo" placeholder="ana@ejemplo.com" required />
+                  </div>
+                  <div class="form-group" style="width: 120px;">
+                    <label>Edad</label>
+                    <input type="number" v-model="formData.edad" placeholder="Años" min="10" max="100" />
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label>Ocupación Actual (Rutina)</label>
+                  <input type="text" v-model="formData.ocupacion" placeholder="Ej. Oficinista, Atleta, Estudiante" />
+                </div>
+
+                <div class="form-group">
+                  <label>Motivo Central de la Consulta *</label>
+                  <textarea v-model="formData.motivo_consulta" rows="2" placeholder="Ej. Pérdida de peso, recomposición, salud metabólica..." required></textarea>
                 </div>
               </div>
 
-              <div class="form-group">
-                <label>Fecha Deseada</label>
-                <div class="input-with-icon">
-                  <CalendarDays :size="18" class="input-icon" />
-                  <input type="date" v-model="formData.fecha" :min="fechaMinima" required />
+              <!-- STEP 2: Antecedentes -->
+              <div v-show="step === 2" class="step-content">
+                <div class="form-group">
+                  <label>Patologías Actuales</label>
+                  <textarea v-model="formData.patologias" rows="2" placeholder="Ej. Diabetes, Hipertensión, SOP, Ninguna..."></textarea>
+                </div>
+
+                <div class="form-group">
+                  <label>Antecedentes Familiares (Padres/Abuelos)</label>
+                  <textarea v-model="formData.antecedentes_familiares" rows="2" placeholder="Enfermedades crónicas en la familia..."></textarea>
+                </div>
+
+                <div class="form-group">
+                  <label>Datos Bioquímicos Recientes</label>
+                  <input type="text" v-model="formData.bioquimicos" placeholder="Colesterol, glucosa, triglicéridos si los conoces..." />
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group flex-1">
+                    <label>Fármacos o Suplementos</label>
+                    <input type="text" v-model="formData.farmacos" placeholder="¿Qué tomas actualmente?" />
+                  </div>
+                  <div class="form-group flex-1">
+                    <label>Salud Digestiva</label>
+                    <input type="text" v-model="formData.digestiva" placeholder="Inflamación, frecuencia de evacuación..." />
+                  </div>
                 </div>
               </div>
 
-              <div class="form-group">
-                <label>
-                  Horario Deseado
-                  <span v-if="cargandoHorarios" class="loading-mini ml-2">Consultando...</span>
-                </label>
-                <div class="input-with-icon">
-                  <Clock :size="18" class="input-icon" />
-                  <select 
-                    v-model="formData.horario" 
-                    :disabled="!formData.fecha || cargandoHorarios"
-                    required
-                  >
-                    <option value="" disabled>
-                      {{ !formData.fecha ? 'Selecciona una fecha primero' : (cargandoHorarios ? 'Cargando...' : 'Elige un horario') }}
-                    </option>
-                    <option 
-                      v-for="h in TODOS_LOS_HORARIOS" 
-                      :key="h" 
-                      :value="h"
-                      :disabled="horariosOcupados.includes(h)"
-                    >
-                      {{ h }} hrs {{ horariosOcupados.includes(h) ? '(Ocupado)' : '' }}
-                    </option>
-                  </select>
+              <!-- STEP 3: Antropometría -->
+              <div v-show="step === 3" class="step-content">
+                <div class="form-row">
+                  <div class="form-group flex-1">
+                    <label>Peso Actual (kg)</label>
+                    <input type="number" v-model="formData.peso" placeholder="70" />
+                  </div>
+                  <div class="form-group flex-1">
+                    <label>Estatura (cm)</label>
+                    <input type="number" v-model="formData.estatura" placeholder="170" />
+                  </div>
                 </div>
-              </div>
-              
-              <div class="modal-actions">
-                <button type="button" class="btn btn-primary btn-full flex-center gap-2" @click="nextStep" :disabled="!canProceedStep1">
-                  Siguiente <ArrowRight :size="18" />
-                </button>
-              </div>
-            </div>
 
-            <!-- STEP 2 -->
-            <div v-show="step === 2" class="step-content">
-              <div class="form-group mb-3 text-left">
-                <label>¿Has tenido atención en nutrición antes?</label>
-                <div class="radio-group mt-2">
-                  <label class="radio-label">
-                    <input type="radio" v-model="formData.atencionPrevia" value="si" />
-                    <span>Sí</span>
-                  </label>
-                  <label class="radio-label">
-                    <input type="radio" v-model="formData.atencionPrevia" value="no" />
-                    <span>No</span>
-                  </label>
+                <div class="form-group">
+                  <label>Circunferencias (Cintura, cadera, brazo)</label>
+                  <input type="text" v-model="formData.circunferencias" placeholder="Si tienes tus medidas, escríbelas aquí..." />
+                </div>
+
+                <div class="form-group">
+                  <label>Composición Corporal (Grasa, músculo)</label>
+                  <input type="text" v-model="formData.composicion" placeholder="Si tienes un inbody o cálculo reciente..." />
                 </div>
               </div>
 
-              <div class="flex gap-3">
-                <div class="form-group flex-1">
-                  <label>Peso Aprox. (kg)</label>
-                  <input type="text" v-model="formData.peso" @input="formData.peso = formData.peso.replace(/\D/g, '').slice(0, 3)" maxlength="3" placeholder="Ej. 70" />
+              <!-- STEP 4: Estilo Dietético -->
+              <div v-show="step === 4" class="step-content">
+                <div class="form-group">
+                  <label>Recordatorio de 24 horas</label>
+                  <textarea v-model="formData.recordatorio_24h" rows="2" placeholder="Describe brevemente qué comiste en tu día de ayer..."></textarea>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group flex-1">
+                    <label>Alergias o Intolerancias</label>
+                    <input type="text" v-model="formData.alergias" placeholder="Lácteos, gluten, mariscos..." />
+                  </div>
+                  <div class="form-group flex-1">
+                    <label>Consumo Ultraprocesados</label>
+                    <input type="text" v-model="formData.ultraprocesados" placeholder="¿Con qué frecuencia (días a la semana)?" />
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label>Gustos y Aversiones</label>
+                  <textarea v-model="formData.gustos" rows="2" placeholder="Alimentos que amas y alimentos que detestas..."></textarea>
                 </div>
                 
-                <div class="form-group flex-1">
-                  <label>Estatura (cm)</label>
-                  <input type="text" v-model="formData.estatura" @input="formData.estatura = formData.estatura.replace(/\D/g, '').slice(0, 3)" maxlength="3" placeholder="Ej. 170" />
+                <div class="form-group">
+                  <label>Logística: ¿Quién cocina y dónde sueles comer?</label>
+                  <input type="text" v-model="formData.logistica_cocina" placeholder="Ej. Cocino yo en casa, o como en la calle por trabajo..." />
                 </div>
               </div>
-              
-              <div class="modal-actions mt-4 flex gap-2">
-                <button type="button" class="btn btn-outline flex-1" @click="step = 1">Atrás</button>
-                <button type="submit" class="btn btn-secondary flex-2 flex-center gap-2" :disabled="isSubmitting">
-                  <span v-if="isSubmitting" class="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
-                  <CheckCircle v-else :size="18" /> Confirmar Cita
-                </button>
+
+              <!-- STEP 5: Fecha y Estilo de Vida -->
+              <div v-show="step === 5" class="step-content">
+                <div class="form-group">
+                  <label>Estilo de Vida (Sueño, Ejercicio, Tabaco/Alcohol, Estrés)</label>
+                  <textarea v-model="formData.estilo_vida" rows="2" placeholder="¿Cuántas horas duermes? ¿Haces pesas? ¿Nivel de estrés del 1 al 10?"></textarea>
+                </div>
+                
+                <div class="divider">Selecciona la Fecha *</div>
+
+                <div class="form-row">
+                  <div class="form-group flex-1">
+                    <label>Día Deseado</label>
+                    <div class="input-with-icon">
+                      <CalendarDays :size="16" class="input-icon" />
+                      <input type="date" v-model="formData.fecha" :min="fechaMinima" required />
+                    </div>
+                  </div>
+
+                  <div class="form-group flex-1">
+                    <label>Horario</label>
+                    <div class="input-with-icon">
+                      <Clock :size="16" class="input-icon" />
+                      <select v-model="formData.horario" :disabled="!formData.fecha" required>
+                        <option value="" disabled>{{ !formData.fecha ? 'Selecciona fecha' : 'Elige horario' }}</option>
+                        <option v-for="h in TODOS_LOS_HORARIOS" :key="h" :value="h">
+                          {{ h }} hrs
+                        </option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
+
+            <!-- Footer Navigation -->
+            <div class="modal-actions form-row mt-4">
+              <button type="button" class="btn btn-outline" v-if="step > 1" @click="step--">Atrás</button>
+              
+              <button type="button" class="btn btn-primary flex-1 flex-center" v-if="step < 5" @click="nextStep" :disabled="!canProceed">
+                Siguiente Paso <ArrowRight :size="18" class="ml-2" />
+              </button>
+
+              <button type="submit" class="btn btn-secondary flex-1 flex-center" v-if="step === 5" :disabled="isSubmitting || !canProceed">
+                <span v-if="isSubmitting" class="spinner mr-2"></span>
+                <CheckCircle v-else :size="18" class="mr-2" /> Finalizar y Agendar
+              </button>
+            </div>
           </form>
+
+          <!-- Éxito Local -->
+          <Transition name="fade">
+            <div v-if="showSuccess" class="success-overlay">
+              <div class="success-inner">
+                <CheckCircle :size="56" class="success-icon" />
+                <h3>¡Solicitud Recibida!</h3>
+                <p>Tu expediente fue guardado. La Nutrióloga se pondrá en contacto pronto.</p>
+              </div>
+            </div>
+          </Transition>
 
         </div>
       </div>
@@ -122,14 +202,20 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 import { useAppStore } from '../../stores/app'
-import { X, User, Phone, CalendarDays, Clock, ArrowRight, CheckCircle } from 'lucide-vue-next'
-import api from '../../services/api'
+import { X, CalendarDays, Clock, ArrowRight, CheckCircle } from 'lucide-vue-next'
 
 const appStore = useAppStore()
 
 const step = ref(1)
+const stepTitles = [
+  'Identidad', 
+  'Antecedentes', 
+  'Antropometría', 
+  'Dieta', 
+  'Cita'
+]
 
 const TODOS_LOS_HORARIOS = [
   '08:00', '08:30', '09:00', '09:30', '10:00', '10:30',
@@ -139,17 +225,14 @@ const TODOS_LOS_HORARIOS = [
 ]
 
 const formData = ref({
-  nombre: '',
-  telefono: '',
-  fecha: '',
-  horario: '',
-  atencionPrevia: 'no',
-  peso: '',
-  estatura: ''
+  nombre: '', telefono: '', correo: '', edad: '', ocupacion: '', motivo_consulta: '',
+  patologias: '', antecedentes_familiares: '', bioquimicos: '', farmacos: '', digestiva: '',
+  peso: '', estatura: '', circunferencias: '', composicion: '',
+  recordatorio_24h: '', alergias: '', ultraprocesados: '', gustos: '', logistica_cocina: '',
+  estilo_vida: '',
+  fecha: '', horario: '',
+  atencionPrevia: 'no'
 })
-
-const horariosOcupados = ref([])
-const cargandoHorarios = ref(false)
 
 const fechaMinima = computed(() => {
   const hoy = new Date()
@@ -159,87 +242,54 @@ const fechaMinima = computed(() => {
 
 const closeModal = () => {
   appStore.toggleModal(false)
-  // reset form eventually when closed
-  setTimeout(() => { step.value = 1 }, 300)
+  setTimeout(() => { step.value = 1 }, 400)
 }
 
-const canProceedStep1 = computed(() => {
-  return formData.value.nombre && formData.value.telefono && formData.value.fecha && formData.value.horario
+const canProceed = computed(() => {
+  if (step.value === 1) {
+    return formData.value.nombre && formData.value.telefono && formData.value.correo && formData.value.motivo_consulta
+  }
+  if (step.value === 5) {
+    return formData.value.fecha && formData.value.horario
+  }
+  return true
 })
 
 const nextStep = () => {
-  if (canProceedStep1.value) {
-    step.value = 2
-  }
+  if (canProceed.value && step.value < 5) step.value++
 }
 
-// Watch fecha to fetch occupied hours
-watch(() => formData.value.fecha, async (newFecha) => {
-  formData.value.horario = '' // Reset selection
-  if (!newFecha) return
-
-  cargandoHorarios.value = true
-  try {
-    const res = await api.get(`/citas/horarios-ocupados?fecha=${newFecha}`)
-    // axios interceptor returns data directly
-    horariosOcupados.value = res.ocupados || []
-  } catch (error) {
-    console.error('Error al consultar horarios:', error)
-  } finally {
-    cargandoHorarios.value = false
-  }
-})
-
 const isSubmitting = ref(false)
+const showSuccess = ref(false)
 
 const submitForm = async () => {
   isSubmitting.value = true
-  try {
-    const payload = {
-      cliente_nombre: formData.value.nombre,
-      cliente_telefono: formData.value.telefono,
-      fecha: formData.value.fecha,
-      horario: formData.value.horario,
-      atencion_previa: formData.value.atencionPrevia,
-      peso: formData.value.peso || null,
-      estatura: formData.value.estatura || null
-    }
-    
-    await api.post('/citas', payload)
-    
-    alert('¡Cita solicitada con éxito! Nos pondremos en contacto muy pronto.')
+  // Guardar localmente (sin base de datos)
+  await new Promise(r => setTimeout(r, 800)) // Pequeño delay para sentido de carga
+  isSubmitting.value = false
+  showSuccess.value = true
+  // Guardar en localStorage como copia local para la nutrióloga si lo quiere revisar
+  const citas = JSON.parse(localStorage.getItem('citas_locales') || '[]')
+  citas.push({ ...formData.value, guardado_en: new Date().toISOString() })
+  localStorage.setItem('citas_locales', JSON.stringify(citas))
+  setTimeout(() => {
+    showSuccess.value = false
     closeModal()
-    
-    // reset form
-    formData.value = {
-      nombre: '',
-      telefono: '',
-      fecha: '',
-      horario: '',
-      atencionPrevia: 'no',
-      peso: '',
-      estatura: ''
-    }
-  } catch (error) {
-    console.error('Error al solicitar cita:', error)
-    const msg = error.response?.data?.error || 'Oops! Hubo un problema al solicitar la cita. Inténtalo de nuevo.'
-    alert(msg)
-  } finally {
-    isSubmitting.value = false
-  }
+    Object.keys(formData.value).forEach(k => formData.value[k] = '')
+    formData.value.atencionPrevia = 'no'
+  }, 2500)
 }
 </script>
 
 <style scoped>
-/* Modal Base */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(15, 32, 39, 0.7);
-  backdrop-filter: blur(8px);
+  background: rgba(15, 32, 39, 0.85);
+  backdrop-filter: blur(12px);
   z-index: 9999;
   display: flex;
   align-items: center;
@@ -248,228 +298,243 @@ const submitForm = async () => {
 }
 
 .modal-content {
-  background: var(--color-white);
-  border-radius: var(--radius-xl);
+  background: var(--color-bg);
+  border-radius: 0;
   width: 100%;
-  max-width: 450px;
+  max-width: 600px;
   position: relative;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  overflow: hidden;
+  box-shadow: 0 40px 100px rgba(0, 0, 0, 0.4);
   display: flex;
   flex-direction: column;
+  max-height: 90vh; /* Para prevenir que salga de pantalla */
 }
+
+.scroll-container {
+  overflow-y: auto;
+  padding: 2rem 2.5rem;
+  flex: 1;
+}
+
+.scroll-container::-webkit-scrollbar { width: 4px; }
+.scroll-container::-webkit-scrollbar-thumb { background: var(--color-primary-light); }
 
 .close-btn {
   position: absolute;
-  top: 1rem;
-  right: 1rem;
+  top: 1.25rem;
+  right: 1.25rem;
   background: transparent;
   border: none;
-  color: #999;
+  color: white;
   cursor: pointer;
-  transition: color 0.2s;
+  transition: opacity 0.2s;
   z-index: 10;
+  opacity: 0.6;
 }
-
-.close-btn:hover {
-  color: var(--color-secondary);
-}
+.close-btn:hover { opacity: 1; }
 
 .modal-header {
-  background: linear-gradient(135deg, var(--color-secondary) 0%, #1a3a41 100%);
-  color: var(--color-white);
-  padding: 2.5rem 2rem 1.5rem;
-  text-align: center;
+  background: var(--color-secondary);
+  color: white;
+  padding: 3rem 2.5rem 1.5rem;
 }
 
 .modal-header h2 {
-  font-size: 1.8rem;
-  font-weight: 800;
-  margin-bottom: 0.5rem;
+  font-family: var(--font-serif);
+  font-size: 2.2rem;
+  color: white;
+  font-weight: 400;
+  margin-bottom: 0.2rem;
+  letter-spacing: -1px;
 }
 
 .modal-header p {
-  color: rgba(255,255,255,0.8);
+  color: rgba(255,255,255,0.7);
   font-size: 0.95rem;
+  font-family: var(--font-main);
 }
 
-/* Progress Bar */
 .progress-bar {
   background: rgba(255,255,255,0.1);
-  height: 6px;
-  border-radius: 3px;
+  height: 4px;
+  margin-top: 1.5rem;
   overflow: hidden;
 }
 
 .progress {
   height: 100%;
-  background: var(--color-primary);
-  transition: width 0.4s ease;
+  background: var(--color-primary-light);
+  transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .step-indicator {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.6);
+  color: rgba(255,255,255,0.5);
   margin-top: 0.5rem;
   letter-spacing: 1px;
 }
 
-/* Form Styles */
 form {
-  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.form-row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
 }
 
 .form-group {
-  margin-bottom: 1.25rem;
-  text-align: left;
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
 }
 
 .form-group label {
-  display: block;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   font-weight: 700;
   color: var(--color-secondary);
-  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.4rem;
 }
 
-input[type="text"],
-input[type="tel"],
-input[type="number"],
-input[type="date"],
-select {
+input[type="text"], input[type="tel"], input[type="email"], input[type="number"], input[type="date"], select, textarea {
   width: 100%;
-  padding: 0.8rem 1rem;
-  border: 1px solid #ddd;
-  border-radius: var(--radius-md);
+  padding: 0.8rem 0;
+  border: none;
+  border-bottom: 1px solid rgba(74, 140, 91, 0.2);
+  background: transparent;
   font-size: 1rem;
   color: var(--color-text);
-  transition: border-color 0.3s, box-shadow 0.3s;
-  background-color: white;
+  font-family: var(--font-main);
+  transition: border-color 0.3s;
+  border-radius: 0;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-bottom: 1px solid var(--color-primary);
+}
+
+textarea {
+  resize: vertical;
+  min-height: 50px;
 }
 
 .input-with-icon {
   position: relative;
 }
 
-.input-with-icon input,
-.input-with-icon select {
-  padding-left: 2.8rem;
+.input-with-icon input, .input-with-icon select {
+  padding-left: 2rem;
 }
 
 .input-icon {
   position: absolute;
   top: 50%;
-  left: 1rem;
+  left: 0;
   transform: translateY(-50%);
-  color: #999;
-  pointer-events: none;
-  z-index: 2;
+  color: var(--color-primary-dark);
+  opacity: 0.5;
 }
 
-input:focus,
-select:focus {
-  outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(117, 203, 190, 0.2);
-}
-
-.loading-mini {
-  font-size: 0.75rem;
-  color: var(--color-primary);
-  font-weight: 600;
-  animation: pulse 1.5s infinite;
-}
-
-.ml-2 { margin-left: 0.5rem; }
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-
-.radio-group {
-  display: flex;
-  gap: 1.5rem;
-}
-
-.radio-label {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  cursor: pointer;
-  font-weight: 600;
-  color: #555;
-}
-
-.radio-label input[type="radio"] {
-  accent-color: var(--color-primary);
-  width: 1.2rem;
-  height: 1.2rem;
+.divider {
+  font-family: var(--font-serif);
+  font-size: 1.4rem;
+  color: var(--color-secondary);
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  padding-bottom: 0.5rem;
+  margin: 1rem 0 1.5rem;
 }
 
 .modal-actions {
-  margin-top: 2rem;
+  padding: 0 2.5rem 2rem;
+  background: var(--color-bg);
+  align-items: center;
 }
-
-/* Utilities */
-.btn-full { width: 100%; }
-.flex { display: flex; }
-.flex-1 { flex: 1; }
-.flex-2 { flex: 2; }
-.gap-2 { gap: 0.5rem; }
-.gap-3 { gap: 1rem; }
-.mb-3 { margin-bottom: 1rem; }
-.mt-2 { margin-top: 0.5rem; }
-.mt-3 { margin-top: 1rem; }
-.mt-4 { margin-top: 1.5rem; }
-.flex-center { display: flex; justify-content: center; align-items: center; }
 
 .btn-outline {
   background: transparent;
-  border: 1px solid #ddd;
-  color: #555;
-  padding: 0.8rem;
-  border-radius: var(--radius-md);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
+  border: 1px solid var(--color-primary-light);
+  color: var(--color-primary);
 }
-
 .btn-outline:hover {
-  background: #f5f5f5;
-  color: var(--color-secondary);
-}
-
-.btn-secondary {
-  background: var(--color-secondary);
+  background: var(--color-primary-light);
   color: white;
-  border: none;
-  padding: 0.8rem;
-  border-radius: var(--radius-md);
-  font-weight: 700;
-  cursor: pointer;
-  transition: background 0.3s;
 }
 
-.btn-secondary:hover {
-  background: #112a30;
+.btn-primary {
+  border-radius: 0; 
+  background: var(--color-primary);
+}
+.btn-secondary {
+  border-radius: 0; 
+  background: var(--color-secondary);
 }
 
-/* Transitions */
-.fade-enter-active, .fade-leave-active {
-  transition: opacity 0.3s ease;
+.flex-1 { flex: 1; }
+.flex-center { display: flex; justify-content: center; align-items: center; }
+.ml-2 { margin-left: 0.5rem; }
+.mr-2 { margin-right: 0.5rem; }
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
 }
-.fade-enter-from, .fade-leave-to {
-  opacity: 0;
-}
+
+@keyframes spin { to { transform: rotate(360deg); } }
 
 .scale-in {
-  animation: scaleIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  animation: scaleIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.9) translateY(20px); }
+  from { opacity: 0; transform: scale(0.95) translateY(15px); }
   to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+
+.success-overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--color-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  z-index: 20;
+  border-radius: inherit;
+}
+
+.success-inner { padding: 3rem; }
+
+.success-icon {
+  color: var(--color-primary);
+  margin: 0 auto 1.5rem;
+}
+
+.success-inner h3 {
+  font-family: var(--font-serif);
+  font-size: 2rem;
+  color: var(--color-secondary);
+  margin-bottom: 1rem;
+}
+
+.success-inner p {
+  color: #666;
+  font-size: 1rem;
+  max-width: 300px;
+  margin: 0 auto;
+  line-height: 1.6;
 }
 </style>

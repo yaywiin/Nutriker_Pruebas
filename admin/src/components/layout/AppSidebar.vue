@@ -19,9 +19,12 @@
         !isExpanded && !isHovered ? 'lg:justify-center' : 'justify-start',
       ]"
     >
-      <router-link to="/" class="flex items-center justify-center">
-        <img v-if="isExpanded || isHovered || isMobileOpen" src="/images/logo/logo-bioclinik.png" alt="Bioclinik Logo" class="h-10 w-auto object-contain" />
-        <span v-else class="text-2xl font-bold">B</span>
+      <router-link to="/" class="flex items-center justify-center gap-2">
+        <template v-if="isExpanded || isHovered || isMobileOpen">
+          <img src="/images/logo/logo_full.png" alt="NutriKer Logo" class="h-12 w-auto object-contain" />
+          <img src="/images/logo/logo_text.png" alt="NutriKer Text" class="h-8 w-auto object-contain" />
+        </template>
+        <img v-else src="/images/logo/icon_apple.png" alt="NutriKer Icon" class="h-10 w-auto object-contain" />
       </router-link>
     </div>
     <div class="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar">
@@ -88,9 +91,7 @@ const { isExpanded, isMobileOpen, isHovered } = useSidebar()
 
 const menuItems = [
   { name: 'Usuarios',  path: '/usuarios',   icon: UserCircleIcon },
-  { name: 'Productos', path: '/productos',  icon: BoxCubeIcon },
-  { name: 'Categorías',path: '/categorias', icon: GridIcon },
-  { name: 'Pedidos',   path: '/pedidos',    icon: ListIcon },
+  { name: 'Clientes',  path: '/clientes',   icon: ListIcon },
   { name: 'Citas',     path: '/citas',      icon: CalenderIcon },
 ]
 

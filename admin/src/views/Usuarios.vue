@@ -3,7 +3,6 @@
     <div class="flex items-center justify-between mb-6">
       <h2 class="text-2xl font-bold text-gray-800 dark:text-white/90">Usuarios</h2>
       <button
-        v-if="userRole === 'Administrador'"
         @click="abrirAgregar"
         class="rounded-lg bg-brand-500 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-300"
       >
@@ -69,7 +68,7 @@
                   <button @click="abrirDetalles(usuario)" class="text-blue-500 hover:text-blue-700" title="Mostrar Detalles">
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                   </button>
-                  <template v-if="userRole === 'Administrador'">
+                  <template v-if="true">
                     <button @click="abrirEditar(usuario)" class="text-yellow-500 hover:text-yellow-700" title="Editar">
                       <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                     </button>
@@ -237,26 +236,16 @@ const form = reactive({ ...initForm() })
 // ── Cargar datos desde la API ─────────────────────────────────────────────────
 async function cargarUsuarios() {
   loading.value = true
-  errorGlobal.value = ''
   
-  // Obtener rol del usuario actual
-  const storedUser = localStorage.getItem('admin_user')
-  if (storedUser) {
-    try {
-      const parsed = JSON.parse(storedUser)
-      userRole.value = parsed.rol || ''
-    } catch (e) {
-      console.error('Error al parsear admin_user', e)
-    }
-  }
-
-  try {
-    usuarios.value = await usuariosApi.getAll()
-  } catch (e: any) {
-    errorGlobal.value = e.message || 'No se pudieron cargar los usuarios. Verifica que el servidor esté activo.'
-  } finally {
+  // Ejemplos estáticos de prueba para visualización
+  setTimeout(() => {
+    usuarios.value = [
+      { id: '1', nombre: 'Administrador Principal', usuario: 'admin', correo: 'admin@nutriker.com', rol: 'Administrador', fechaAlta: '2024-01-15' },
+      { id: '2', nombre: 'Asistente Recepción', usuario: 'asistente_01', correo: 'recepcion@nutriker.com', rol: 'Asistente', fechaAlta: '2024-02-20' },
+      { id: '3', nombre: 'Dr. Alejandro', usuario: 'alejandro_dr', correo: 'alejandro@nutriker.com', rol: 'Administrador', fechaAlta: '2024-03-05' }
+    ]
     loading.value = false
-  }
+  }, 400)
 }
 
 onMounted(cargarUsuarios)

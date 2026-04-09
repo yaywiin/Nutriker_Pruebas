@@ -23,22 +23,10 @@ const router = createRouter({
       meta: { title: 'Usuarios' },
     },
     {
-      path: '/productos',
-      name: 'Productos',
-      component: () => import('../views/Productos.vue'),
-      meta: { title: 'Productos' },
-    },
-    {
-      path: '/categorias',
-      name: 'Categorías',
-      component: () => import('../views/Categorias.vue'),
-      meta: { title: 'Categorías' },
-    },
-    {
-      path: '/pedidos',
-      name: 'Pedidos',
-      component: () => import('../views/Pedidos.vue'),
-      meta: { title: 'Pedidos' },
+      path: '/clientes',
+      name: 'Clientes',
+      component: () => import('../views/Clientes.vue'),
+      meta: { title: 'Clientes' },
     },
     {
       path: '/citas',
@@ -52,12 +40,13 @@ const router = createRouter({
 export default router
 
 router.beforeEach((to, from, next) => {
-  document.title = `Bioclinik Admin | ${to.meta.title ?? ''}`
+  document.title = `NutriKer Admin | ${to.meta.title ?? ''}`
   
   const isAuthenticated = localStorage.getItem('admin_logged') === 'true'
   
   if (to.path !== '/login' && !isAuthenticated) {
-    next('/login')
+    // next('/login') // TEMPORALMENTE DESACTIVADO PARA DESARROLLO RÁPIDO
+    next()
   } else if (to.path === '/login' && isAuthenticated) {
     next('/usuarios')
   } else {

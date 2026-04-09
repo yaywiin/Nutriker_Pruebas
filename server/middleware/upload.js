@@ -14,7 +14,7 @@ cloudinary.config({
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
-    folder: 'bioclinik', // La carpeta en Cloudinary
+    folder: 'nutriker', // La carpeta en Cloudinary
     allowed_formats: ['jpeg', 'jpg', 'png', 'gif', 'webp'],
   },
 })
@@ -30,5 +30,5 @@ export const getPublicIdFromUrl = (url) => {
   const parts = url.split('/');
   const filename = parts[parts.length - 1];
   const [id] = filename.split('.');
-  return `bioclinik/${id}`; // ya que está en la carpeta bioclinik
+  return `nutriker/${id}`; // ya que está en la carpeta nutriker
 }

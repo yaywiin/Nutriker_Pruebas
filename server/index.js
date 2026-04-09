@@ -37,7 +37,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
 
 // ── Ruta raíz (SOLUCIÓN) ───────────────────────────────
 app.get('/', (req, res) => {
-  res.send('API Bioclinik funcionando 🚀')
+  res.send('API NutriKer funcionando 🚀')
 })
 
 // ── Rutas API ──────────────────────────────────────────
@@ -59,5 +59,5 @@ app.use((req, res) => {
 
 // ── Servidor ───────────────────────────────────────────
 app.listen(PORT, () => {
-  console.log(`🚀 Servidor Bioclinik escuchando en http://localhost:${PORT}`)
+  console.log(`🚀 Servidor NutriKer escuchando en http://localhost:${PORT}`)
 })
