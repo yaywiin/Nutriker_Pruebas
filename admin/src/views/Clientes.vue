@@ -232,7 +232,12 @@
           </h3>
 
           <form @submit.prevent="guardarCliente" class="space-y-8">
-            
+            <!-- Error banner -->
+            <div v-if="errorGuardado" class="flex items-start gap-2 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400">
+              <svg class="h-4 w-4 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              <span>{{ errorGuardado }}</span>
+            </div>
+
             <!-- 1. Identidad -->
             <div>
               <h4 class="text-sm font-semibold text-brand-500 mb-3 border-b border-gray-100 dark:border-gray-700 pb-2">1. Identidad General</h4>
@@ -348,6 +353,14 @@
             <!-- 5. Cita -->
             <div>
               <h4 class="text-sm font-semibold text-brand-500 mb-3 border-b border-gray-100 dark:border-gray-700 pb-2">5. Gestión de Cita</h4>
+              <div v-if="form.cita_id" class="mb-3 flex items-center gap-2 rounded-lg bg-green-50 border border-green-200 px-3 py-2 text-xs text-green-700 dark:bg-green-900/20 dark:border-green-800 dark:text-green-400">
+                <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                Cita sincronizada con el calendario (ID: {{ form.cita_id }}). Al guardar, se actualizará automáticamente.
+              </div>
+              <div v-else-if="form.fecha && form.horario" class="mb-3 flex items-center gap-2 rounded-lg bg-blue-50 border border-blue-200 px-3 py-2 text-xs text-blue-700 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-400">
+                <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                Al guardar, esta cita se agregará automáticamente al calendario.
+              </div>
               <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label class="mb-1 block text-[13px] font-medium text-gray-700 dark:text-gray-400">Atención Previa en Clínica</label>
@@ -362,7 +375,10 @@
                 </div>
                 <div>
                   <label class="mb-1 block text-[13px] font-medium text-gray-700 dark:text-gray-400">Horario</label>
-                  <input v-model="form.horario" type="time" class="form-input" />
+                  <select v-model="form.horario" class="form-input bg-white dark:bg-gray-800">
+                    <option value="">Seleccionar horario</option>
+                    <option v-for="h in HORARIOS" :key="h" :value="h">{{ h }}</option>
+                  </select>
                 </div>
               </div>
             </div>
@@ -373,9 +389,10 @@
                 class="rounded-lg border border-gray-300 px-6 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors">
                 Cancelar
               </button>
-              <button type="submit"
-                class="rounded-lg bg-brand-500 px-6 py-2.5 text-sm font-bold text-white hover:bg-brand-600 transition-colors flex items-center gap-2">
-                Guardar Expediente
+              <button type="submit" :disabled="guardando"
+                class="rounded-lg bg-brand-500 px-6 py-2.5 text-sm font-bold text-white hover:bg-brand-600 transition-colors flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed">
+                <svg v-if="guardando" class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>
+                {{ guardando ? 'Guardando...' : 'Guardar Expediente' }}
               </button>
             </div>
           </form>
@@ -389,10 +406,20 @@
 import { ref, reactive } from 'vue'
 import AdminLayout from '@/components/layout/AdminLayout.vue'
 import Modal from '@/components/ui/Modal.vue'
+import { citasApi } from '@/api/index.js'
+
+// Horarios disponibles de la clínica (mismo set que el servidor)
+const HORARIOS = [
+  '08:00','08:30','09:00','09:30','10:00','10:30',
+  '11:00','11:30','12:00','12:30','13:00','13:30',
+  '14:00','14:30','15:00','15:30','16:00','16:30',
+  '17:00','17:30'
+]
 
 // Inicializador basado estrictamente en el formulario final de CitasModal.vue
 const initForm = () => ({
   id: null as number | null,
+  cita_id: null as string | null,   // ID de la cita vinculada en la tabla `citas`
   nombre: '',
   telefono: '',
   correo: '',
@@ -424,12 +451,15 @@ const form = reactive({ ...initForm() })
 const modalFormVisible = ref(false)
 const modalDetallesVisible = ref(false)
 const isEditing = ref(false)
+const guardando = ref(false)
+const errorGuardado = ref('')
 const clienteSeleccionado = ref<any>(null)
 
-// Ejemplos complejos rellenados como si hubieran pasado por la página principal
+// Expedientes clínicos (en memoria — no conectado a un endpoint propio aún)
 const clientes = ref<any[]>([
   { 
     id: 1, 
+    cita_id: null,
     nombre: 'Ana Sofía Montenegro', 
     telefono: '+502 5544-2211', 
     correo: 'ana_montenegro@gmail.com', 
@@ -451,12 +481,13 @@ const clientes = ref<any[]>([
     gustos: 'Me encanta el aguacate y el pollo. No aguanto el pescado.',
     logistica_cocina: 'Cocino yo en las noches.',
     estilo_vida: 'Voy al gym 3 días a la semana, pesas.',
-    fecha: '2024-05-15',
-    horario: '10:30',
+    fecha: '',
+    horario: '',
     atencionPrevia: 'no'
   },
   { 
     id: 2, 
+    cita_id: null,
     nombre: 'Fernando Rafael Orozco', 
     telefono: '+502 3311-9988', 
     correo: 'ferorozco@yahoo.es', 
@@ -478,8 +509,8 @@ const clientes = ref<any[]>([
     gustos: 'Todo en especial la pasta.',
     logistica_cocina: 'Mi esposa cocina.',
     estilo_vida: 'Corredor aficionado, 10km semanales.',
-    fecha: '2024-06-02',
-    horario: '14:00',
+    fecha: '',
+    horario: '',
     atencionPrevia: 'si'
   },
 ])
@@ -501,17 +532,50 @@ const cerrarFormulario = () => {
   modalFormVisible.value = false
 }
 
-const guardarCliente = () => {
-  if (isEditing.value && form.id) {
-    const objIndex = clientes.value.findIndex(obj => obj.id === form.id)
-    clientes.value[objIndex] = { ...form }
-  } else {
-    clientes.value.push({
-      ...form,
-      id: Date.now()
-    })
+const guardarCliente = async () => {
+  errorGuardado.value = ''
+  guardando.value = true
+
+  try {
+    // ── Sincronizar con el calendario de Citas ──────────────────────────
+    if (form.fecha && form.horario && form.nombre && form.telefono) {
+      const citaPayload = {
+        cliente_nombre: form.nombre,
+        cliente_telefono: form.telefono,
+        fecha: form.fecha,
+        horario: form.horario,
+        atencion_previa: form.atencionPrevia || 'no',
+        peso: form.peso || null,
+        estatura: form.estatura || null,
+      }
+
+      if (form.cita_id) {
+        // Actualizar cita existente
+        await citasApi.update(form.cita_id, citaPayload)
+      } else {
+        // Crear nueva cita y guardar el ID
+        const nuevaCita = await citasApi.create(citaPayload)
+        form.cita_id = nuevaCita.id
+      }
+    }
+
+    // ── Guardar expediente en memoria ───────────────────────────────────
+    if (isEditing.value && form.id) {
+      const objIndex = clientes.value.findIndex(obj => obj.id === form.id)
+      clientes.value[objIndex] = { ...form }
+    } else {
+      clientes.value.push({
+        ...form,
+        id: Date.now()
+      })
+    }
+
+    cerrarFormulario()
+  } catch (e: any) {
+    errorGuardado.value = e.message || 'Error al guardar el expediente.'
+  } finally {
+    guardando.value = false
   }
-  cerrarFormulario()
 }
 
 const abrirDetalles = (cliente: any) => {
